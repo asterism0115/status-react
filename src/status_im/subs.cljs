@@ -1435,23 +1435,15 @@
 (re-frame/reg-sub
  :chats/mentionable-users
  :<- [:chats/current-chat]
- :<- [:chats/mentionable-contacts]
  :<- [:contacts/blocked-set]
  :<- [:multiaccount]
- (fn [[{:keys [chat-id users chat-type]} contacts blocked {:keys [name preferred-name public-key]}]]
-   (let [contacts-with-one-to-one (if (= chat-type constants/one-to-one-chat-type)
-                                    (assoc contacts chat-id (get contacts chat-id (-> chat-id
-                                                                                      contact.db/public-key->new-contact
-                                                                                      contact.db/enrich-contact)))
-                                    contacts)]
-     (apply dissoc
-            (-> users
-                (merge contacts-with-one-to-one)
-                (assoc public-key (mentions/add-searchable-phrases
-                                   {:alias      name
-                                    :name       (or preferred-name name)
-                                    :public-key public-key})))
-            (conj blocked public-key)))))
+ (fn [[{:keys [users]} blocked {:keys [name preferred-name public-key]}]]
+   (apply dissoc
+            (assoc users public-key (mentions/add-searchable-phrases
+                               {:alias      name
+                                :name       (or preferred-name name)
+                                :public-key public-key}))
+            (conj blocked public-key))))
 
 (re-frame/reg-sub
  :chat/mention-suggestions
