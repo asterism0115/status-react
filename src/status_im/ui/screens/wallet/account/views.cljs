@@ -7,13 +7,13 @@
             [quo.design-system.colors :as colors]
             [status-im.ui.components.icons.icons :as icons]
             [quo.core :as quo]
+            [quo.design-system.spacing :as spacing]
             [status-im.ui.components.react :as react]
             [status-im.ui.components.topbar :as topbar]
             [status-im.utils.config :as config]
             [status-im.ui.screens.wallet.account.styles :as styles]
             [status-im.ui.screens.wallet.accounts.sheets :as sheets]
             [status-im.ui.screens.wallet.accounts.views :as accounts]
-            [status-im.ui.screens.wallet.buy-crypto.views :as buy-crypto]
             [status-im.ui.screens.wallet.transactions.views :as history]
             [status-im.ui.components.tabs :as tabs]
             [status-im.ui.screens.wallet.collectibles.views :as collectibles.views])
@@ -102,41 +102,40 @@
                   currency [:wallet/currency]
                   opensea-enabled? [:opensea-enabled?]
                   collectible-collection [:wallet/collectible-collection address]
-                  mainnet? [:mainnet?]
                   ethereum-network? [:ethereum-network?]]
     (let [{:keys [tab]} @state]
       [react/view {:flex 1}
        [react/view {:flex-direction :row :margin-bottom 8 :padding-horizontal 4}
         [tabs/tab-title state :assets (i18n/label :t/wallet-assets) (= tab :assets)]
+        [quo/separator {:style {:margin-top -8}}]
         (when ethereum-network?
           [tabs/tab-title state :nft (i18n/label :t/wallet-collectibles) (= tab :nft)])
-        [tabs/tab-title state :history (i18n/label :t/history) (= tab :history)]]
-       (cond
-         (= tab :assets)
-         [:<>
-          (when mainnet?
-            [buy-crypto/banner])
-          (for [item tokens]
-            ^{:key (:name item)}
-            [accounts/render-asset item nil nil (:code currency)])]
-         (= tab :nft)
-         [:<>
-          [opensea-link address]
-          ;; Hide collectibles behind a feature flag
-          (when config/collectibles-enabled?
-            (cond
-              (not opensea-enabled?)
-              [collectibles.views/enable-opensea-view]
+        (when ethereum-network?
+          [tabs/tab-title state :history (i18n/label :t/history) (= tab :history)])]]
+      (cond
+        (= tab :assets)
+        [:<>
+         (for [item tokens]
+           ^{:key (:name item)}
+           [accounts/render-asset item nil nil (:code currency)])]
+        (= tab :nft)
+        [:<>
+         [opensea-link address]
+         ;; Hide collectibles behind a feature flag
+         (when config/collectibles-enabled?
+           (cond
+             (not opensea-enabled?)
+             [collectibles.views/enable-opensea-view]
 
-              (and opensea-enabled? (seq collectible-collection))
-              [collectibles.views/nft-collections address]
+             (and opensea-enabled? (seq collectible-collection))
+             [collectibles.views/nft-collections address]
 
-              :else
-              [react/view {:align-items :center :margin-top 32}
-               [react/text {:style {:color colors/gray}}
-                (i18n/label :t/no-collectibles)]]))]
-         (= tab :history)
-         [transactions address])])))
+             :else
+             [react/view {:align-items :center :margin-top 32}
+              [react/text {:style {:color colors/gray}}
+               (i18n/label :t/no-collectibles)]]))]
+        (= tab :history)
+        [transactions address]))))
 
 (views/defview bottom-send-recv-buttons [{:keys [address type] :as account} anim-y]
   [react/animated-view {:style {:background-color colors/white
@@ -180,6 +179,39 @@
            (animation/start
             (styles/bottom-send-recv-buttons-lower anim-y button-group-height)
             #(reset! to-show false))))))))
+
+(def action-button-style
+  {:background-color colors/blue
+   :height           44
+   :flex             1
+   :justify-content  :center
+   :align-items      :center
+   :width            44
+   :border-radius    44})
+
+(defn action-button [{:keys [icon title icon-color bg-color on-press]}]
+  [react/view {:style {:flex            1
+                       :align-items     :center
+                       :margin-vertical (:large spacing/spacing)}}
+   [react/touchable-opacity {:style    action-button-style
+                             :on-press on-press}
+    (icons/icon icon {:color colors/white})]
+   [quo/text {:color :secondary
+              :size  :small
+              :style {:margin-top (:tiny spacing/spacing)}}
+    title]])
+
+(defn top-actions []
+  [react/view {:style {:flex            1
+                       :flex-direction  :row
+                       :justify-content :space-between
+                       :width           "60%"
+                       :align-self      :center}}
+   [action-button {:icon  :main-icons/add
+                   :title (i18n/label :t/buy-crypto)
+                   :on-press #(re-frame/dispatch [:buy-crypto.ui/open-screen]) }]
+   [action-button {:icon  :main-icons/change
+                   :title (i18n/label :t/swap)}]])
 
 (views/defview account []
   (views/letsubs [{:keys [name address] :as account} [:multiaccount/current-account]
@@ -233,5 +265,6 @@
          [react/scroll-view {:horizontal true}
           [react/view {:flex-direction :row :padding-top 8 :padding-bottom 12}
            [account-card account]]]]
+        [top-actions]
         [assets-and-collections address]]
        [bottom-send-recv-buttons account anim-y]])))

@@ -1701,5 +1701,6 @@
     "status-dnd-subtitle": "Mutes all notifications",
     "status-always-online": "Always Online",
     "status-inactive": "Inactive",
-    "status-inactive-subtitle": "Hides your online status"
+    "status-inactive-subtitle": "Hides your online status",
+    "swap": "Swap"
 }
