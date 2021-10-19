@@ -180,20 +180,11 @@
             (styles/bottom-send-recv-buttons-lower anim-y button-group-height)
             #(reset! to-show false))))))))
 
-(def action-button-style
-  {:background-color colors/blue
-   :height           44
-   :flex             1
-   :justify-content  :center
-   :align-items      :center
-   :width            44
-   :border-radius    44})
-
-(defn action-button [{:keys [icon title icon-color bg-color on-press]}]
+(defn round-action-button [{:keys [icon title icon-color bg-color on-press]}]
   [react/view {:style {:flex            1
                        :align-items     :center
                        :margin-vertical (:large spacing/spacing)}}
-   [react/touchable-opacity {:style    action-button-style
+   [react/touchable-opacity {:style    styles/round-action-button
                              :on-press on-press}
     (icons/icon icon {:color colors/white})]
    [quo/text {:color :secondary
@@ -202,16 +193,15 @@
     title]])
 
 (defn top-actions []
-  [react/view {:style {:flex            1
-                       :flex-direction  :row
-                       :justify-content :space-between
-                       :width           "60%"
-                       :align-self      :center}}
-   [action-button {:icon  :main-icons/add
-                   :title (i18n/label :t/buy-crypto)
-                   :on-press #(re-frame/dispatch [:buy-crypto.ui/open-screen]) }]
-   [action-button {:icon  :main-icons/change
-                   :title (i18n/label :t/swap)}]])
+  [react/view {:style styles/top-actions}
+   [round-action-button {:icon     :main-icons/add
+                         :title    (i18n/label :t/buy-crypto)
+                         :on-press #(re-frame/dispatch [:buy-crypto.ui/open-screen]) }]
+   [round-action-button {:icon  :main-icons/change
+                         :title (i18n/label :t/swap)
+                         :on-press #(re-frame/dispatch [:open-modal :token-swap])}]])
+
+(defn floating-action [])
 
 (views/defview account []
   (views/letsubs [{:keys [name address] :as account} [:multiaccount/current-account]

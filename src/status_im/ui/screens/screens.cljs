@@ -44,6 +44,17 @@
             [status-im.ui.screens.currency-settings.views :as currency-settings]
             [status-im.ui.screens.dapps-permissions.views :as dapps-permissions]
             [status-im.ui.screens.default-sync-period-settings.view :as default-sync-period-settings]
+            [status-im.ui.screens.wallet.settings.views :as wallet-settings]
+            [status-im.ui.screens.wallet.transactions.views :as wallet-transactions]
+            [status-im.ui.screens.wallet.custom-tokens.views :as custom-tokens]
+            [status-im.ui.screens.wallet.accounts.views :as wallet.accounts]
+            [status-im.ui.screens.wallet.collectibles.views :as wallet.collectibles]
+            [status-im.ui.screens.wallet.account.views :as wallet.account]
+            [status-im.ui.screens.wallet.add-new.views :as add-account]
+            [status-im.ui.screens.wallet.account-settings.views :as account-settings]
+            [status-im.ui.screens.wallet.swap.views :as wallet.swap]
+            [status-im.ui.screens.status.views :as status.views]
+            [status-im.ui.screens.profile.user.views :as profile.user]
             [status-im.ui.screens.ens.views :as ens]
             [status-im.ui.screens.fleet-settings.views :as fleet-settings]
             [status-im.ui.screens.glossary.view :as glossary]
@@ -399,6 +410,11 @@
             :options   {:topBar {:title {:text (i18n/label :t/wallet-manage-accounts)}}}
             :component accounts-manage/manage}
 
+           {:name      :token-swap
+            ;;TODO dynamic title
+            :options   {:topBar {:visible false}}
+            :component wallet.swap/swap}
+
            ;;MY STATUS
 
            {:name      :status
@@ -707,8 +723,8 @@
             :options   {:topBar {:visible false}}
             :component wallet.buy-crypto/website}
 
-           {:name   :nft-details
-            :insets {:bottom true}
+           {:name      :nft-details
+            :insets    {:bottom true}
             ;;TODO dynamic title
             :options   {:topBar {:visible false}}
             :component wallet.collectibles/nft-details-modal}
