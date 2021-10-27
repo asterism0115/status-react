@@ -1702,5 +1702,7 @@
     "status-always-online": "Always Online",
     "status-inactive": "Inactive",
     "status-inactive-subtitle": "Hides your online status",
-    "swap": "Swap"
+    "swap": "Swap",
+    "select-token-to-swap": "Select token to Swap",
+    "select-token-to-receive": "Select token to receive"
 }

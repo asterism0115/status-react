@@ -1,23 +1,46 @@
 (ns status-im.ui.screens.wallet.swap.views
   (:require [quo.core :as quo]
             [quo.design-system.colors :as colors]
+            [re-frame.core :as re-frame]
             [status-im.ethereum.tokens :as tokens]
+            [status-im.ui.components.icons.icons :as icons]
             [status-im.ui.components.keyboard-avoid-presentation
              :as
              kb-presentation]
             [status-im.ui.components.react :as react]
+            [status-im.ui.components.slider :as slider]
             [status-im.ui.components.toolbar :as toolbar]
             [status-im.ui.components.topbar :as topbar]
+            [status-im.ui.screens.wallet.accounts.views :as accounts]
             [status-im.utils.handlers :refer [<sub]]
-            [status-im.ui.components.icons.icons :as icons]
-            [status-im.ui.components.slider :as slider]))
+            [status-im.i18n.i18n :as i18n]
+            [status-im.ui.components.search-input.view :as search-input]))
+
+(defn asset-selector []
+  (let [{:keys [address]} (<sub [:multiaccount/current-account])
+        {:keys [tokens]}  (<sub [:wallet/visible-assets-with-values address])
+        currency          (<sub [:wallet/currency])]
+    [:<>
+     [topbar/topbar
+      {:title  (if true
+                 (i18n/label :t/select-token-to-swap)
+                 (i18n/label :t/select-token-to-receive))
+       :modal? true}]
+
+     [search-input/search-input
+      {:search-active? true}]
+
+     [react/scroll-view
+      (for [token tokens]
+        ^{:key (:name token)}
+        [accounts/render-asset token nil nil (:code currency)])]]))
 
 (defn token-display
   "Show token and act as an anchor to open selector"
   [token]
   (let [token-icon-source (-> token :icon :source)]
     [react/touchable-highlight
-     {:on-press #()}
+     {:on-press #(re-frame/dispatch [:open-modal :swap-asset-selector])}
      [react/view {:style {:flex-direction     :row
                           :align-items        :center
                           :border-width       1
