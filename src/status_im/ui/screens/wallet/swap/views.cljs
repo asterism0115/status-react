@@ -120,36 +120,37 @@
                        :mainnet
                        vals
                        second)]
-    [kb-presentation/keyboard-avoiding-view {:style {:flex 1}}
-     [:<>
-      [topbar/topbar
-       {:title  name
-        :modal? true}]
+    [kb-presentation/keyboard-avoiding-view {:style         {:flex            1
+                                                             :justify-content :space-between}
+                                             :ignore-offset true}
+     [topbar/topbar
+      {:title  name
+       :modal? true}]
 
-      [react/view {:flex               1
-                   :padding-horizontal 16
-                   :margin-vertical    32}
-       [token-input {:amount amount
-                     :error  nil
-                     :label  "Amount"
-                     :token  from-token
-                     :max-from 67.28}]
+     [react/view {:flex               1
+                  :padding-horizontal 16
+                  :margin-vertical    32}
+      [token-input {:amount   amount
+                    :error    nil
+                    :label    "Amount"
+                    :token    from-token
+                    :max-from 67.28}]
 
-       [separator-with-icon]
+      [separator-with-icon]
 
-       [token-input {:amount "0.01"
-                     :error  nil
-                     :label  "Minimum Received"
-                     :token  to-token}]]
+      [token-input {:amount "0.01"
+                    :error  nil
+                    :label  "Minimum Received"
+                    :token  to-token}]]
 
 
-      [slider/animated-slider
-       {:minimum-value 0
-        :maximum-value 100}]
-      [toolbar/toolbar
-       {:show-border? true
-        :left         [quo/button {:style {:background-color colors/white}}
-                       "Swap and Send"]
-        :right        [quo/button {:theme :accent}
-                       "Swap"]}]]]))
+     [slider/animated-slider
+      {:minimum-value 0
+       :maximum-value 100}]
+     [toolbar/toolbar
+      {:show-border? true
+       :left         [quo/button {:style {:background-color colors/white}}
+                      "Swap and Send"]
+       :right        [quo/button {:theme :accent}
+                      "Swap"]}]]))
 
