@@ -3,7 +3,7 @@
     "_comment": "Instead use: scripts/update-status-go.sh <rev>",
     "owner": "status-im",
     "repo": "status-go",
-    "version": "v0.91.10",
-    "commit-sha1": "7ef2efaabd643a476699d545d22faf36ba066b08",
-    "src-sha256": "0rwpbkqwzk772advqs6g98bqrbcvhs25xwwnfci04pqycklh11zb"
+    "version": "feat/#11889-p2-allow-sending-messages-offline",
+    "commit-sha1": "a62651b35e0050f0d9e79f4098d0076afda58730",
+    "src-sha256": "0m4966lmbifs63d5j91v3qx1bsvi1csx995qyikqcjv5l3lky667"
 }
