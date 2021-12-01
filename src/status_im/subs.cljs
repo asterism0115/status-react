@@ -1435,15 +1435,28 @@
 (re-frame/reg-sub
  :chats/mentionable-users
  :<- [:chats/current-chat]
+ :<- [:chats/mentionable-contacts]
  :<- [:contacts/blocked-set]
  :<- [:multiaccount]
- (fn [[{:keys [users]} blocked {:keys [name preferred-name public-key]}]]
-   (apply dissoc
-            (assoc users public-key (mentions/add-searchable-phrases
-                               {:alias      name
-                                :name       (or preferred-name name)
-                                :public-key public-key}))
-            (conj blocked public-key))))
+ (fn [[{:keys [chat-id users contacts community-id chat-type]} mentionable-contacts blocked {:keys [name preferred-name public-key]}]]
+   (let [community-members @(re-frame/subscribe [:communities/community-members
+                                                 community-id])
+         contacts-with-one-to-one (if (= chat-type constants/one-to-one-chat-type)
+                                    (assoc mentionable-contacts chat-id (get mentionable-contacts chat-id (-> chat-id
+                                                                                                              contact.db/public-key->new-contact
+                                                                                                              contact.db/enrich-contact)))
+                                    mentionable-contacts)
+         filtered-contacts (select-keys contacts-with-one-to-one (if (nil? community-id)
+                                                                   (distinct (concat (seq contacts) (keys users) [chat-id]))
+                                                                   (keys community-members)))]
+     (apply dissoc
+            (-> users
+                (merge filtered-contacts)
+                (assoc public-key (mentions/add-searchable-phrases
+                                   {:alias      name
+                                    :name       (or preferred-name name)
+                                    :public-key public-key})))
+            (conj blocked public-key)))))
 
 (re-frame/reg-sub
  :chat/mention-suggestions
