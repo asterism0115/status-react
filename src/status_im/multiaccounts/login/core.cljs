@@ -363,6 +363,13 @@
         keychain/auth-method-biometric
         keychain/auth-method-password))))
 
+(defn check-chat-id []
+  (async-storage/get-item
+   :chat-id
+   (fn [chat-id]
+     (when chat-id
+       (re-frame/dispatch [:chat.ui/navigate-to-chat chat-id])))))
+
 (defn redirect-to-root
   "Decides which root should be initialised depending on user and app state"
   [db]
@@ -381,7 +388,8 @@
            config/metrics-enabled?)
       (navigation/navigate-to :anon-metrics-opt-in {})
 
-      :else (re-frame/dispatch [:init-root :chat-stack]))))
+      :else  (do (re-frame/dispatch [:init-root :chat-stack])
+                 (check-chat-id)))))
 
 (fx/defn login-only-events
   [{:keys [db] :as cofx} key-uid password save-password?]
