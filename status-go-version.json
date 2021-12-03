@@ -3,7 +3,7 @@
     "_comment": "Instead use: scripts/update-status-go.sh <rev>",
     "owner": "status-im",
     "repo": "status-go",
-    "version": "v0.91.14",
-    "commit-sha1": "0867458f16dc8ddb5a25113083c82fde3b27f148",
-    "src-sha256": "0l1slzs96glycylsy8cdi20qzabdhwd3j78fwvn4aknxddyyy8fr"
+    "version": "feature/decline-group-invites-on-user-block",
+    "commit-sha1": "3ef45e27695dbf1d9e5c551605c6a8afbd8b1e61",
+    "src-sha256": "1ibfffz1xq959cq5yxfz14f8qbqihrkk9agzjws1rp3anc1bz64m"
 }
