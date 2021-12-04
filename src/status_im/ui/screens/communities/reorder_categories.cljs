@@ -6,6 +6,7 @@
             [clojure.string :as string]
             [clojure.set :as clojure.set]
             [status-im.i18n.i18n :as i18n]
+            [status-im.utils.types :as types]
             [status-im.constants :as constants]
             [quo.design-system.colors :as colors]
             [status-im.utils.platform :as platform]
@@ -17,8 +18,21 @@
             [status-im.ui.screens.communities.community :as community]
             [status-im.ui.screens.home.views.inner-item :as inner-item]))
 
-(def collapse-chats? (reagent/atom false))
 (def data (reagent/atom []))
+(def categories (atom []))
+(def chats (atom []))
+
+(defn reset-data []
+  (reset! data (walk/postwalk-replace
+                {:chat-id :id}
+                (reduce (fn [acc category]
+                          (-> acc
+                              (conj category)
+                              (into (get @chats (:id category))))) [] @categories))))
+
+(defn remove-chats-from-data []
+  (reset! data (into [] (remove #(= (:chat-type %) constants/community-chat-type) @data)))
+  (reagent/flush))
 
 (defn chat-item
   [{:keys [id categoryID community-id] :as home-item} is-active? drag]
@@ -72,12 +86,13 @@
          [icons/icon :main-icons/delete-circle {:no-color true}]])
       [rn/view {:flex 1}
        [rn/text {:style {:font-size 17 :margin-left 10 :color colors/black}} name]]
-      (when (and (not category-none?) @collapse-chats?)
-        [rn/touchable-opacity {:accessibility-label :category-drag-handle
-                               :on-long-press       drag
-                               :delay-long-press    100
-                               :style               {:padding 20}}
-         [icons/icon :main-icons/reorder-handle {:no-color true :width 18 :height 12}]])]]))
+      [rn/touchable-opacity {:accessibility-label :category-drag-handle
+                             :on-long-press       #(do
+                                                     (remove-chats-from-data)
+                                                     (drag))
+                             :delay-long-press    100
+                             :style               {:padding 20}}
+       [icons/icon :main-icons/reorder-handle {:no-color true :width 18 :height 12}]]]]))
 
 (defn render-fn
   [{:keys [chat-type] :as item} _ _ _ is-active? drag]
@@ -100,39 +115,35 @@
               [categoryID (inc position)]) [id 0]))]
     [new-category new-position]))
 
-(defn update-local-atom [data-js]
-  (reset! data data-js)
+(defn update-local-atom [updated-data on-drag-end-chat?]
+  (if on-drag-end-chat?
+    (reset! data updated-data)
+    (do (reset! categories updated-data)
+        (reset-data)))
   (reagent/flush))
 
-(defn on-drag-end-chat [from to data-js]
-  (let [{:keys [id community-id categoryID position]} (get @data from)
-        [new-category new-position]                   (calculate-chat-new-position-and-category
-                                                       to false categoryID (> from to))
-        chat-id                                       (string/replace id community-id "")]
+(defn on-drag-end-chat [from to updated-data {:keys [id community-id categoryID position]}]
+  (let [[new-category new-position] (calculate-chat-new-position-and-category
+                                     to false categoryID (> from to))
+        chat-id                     (string/replace id community-id "")]
     (when-not (and (= new-position position) (= new-category categoryID))
-      (update-local-atom data-js)
+      (update-local-atom updated-data true)
       (>evt [::communities/reorder-community-category-chat
              community-id new-category chat-id new-position]))))
 
-(defn on-drag-end-category [from to data-js]
-  (let [{:keys [id community-id position]} (get @data from)]
-    (when (and (< to (dec (count @data))) (not= position to) (not= id ""))
-      (update-local-atom data-js)
-      (>evt [::communities/reorder-community-category community-id id to]))))
+(defn on-drag-end-category [to updated-data {:keys [id community-id position]}]
+  (if (and (< to (dec (count @data))) (not= position to) (not= id ""))
+    (do
+      (update-local-atom updated-data false)
+      (>evt [::communities/reorder-community-category community-id id to]))
+    (reset-data)))
 
 (defn on-drag-end-fn [from to data-js]
-  (if @collapse-chats?
-    (on-drag-end-category from to data-js)
-    (when-not (= to 0) (on-drag-end-chat from to data-js))))
-
-(defn reset-data [categories chats]
-  (reset! data (if @collapse-chats? categories ;; If chats are collapsed then only show categories
-                   (walk/postwalk-replace      ;; else, categories and chats
-                    {:chat-id :id}
-                    (reduce (fn [acc category]
-                              (-> acc
-                                  (conj category)
-                                  (into (get chats (:id category))))) [] categories)))))
+  (let [{:keys [chat-type] :as item} (get @data from)
+        updated-data                 (types/js->clj data-js)]
+    (if (= chat-type constants/community-chat-type)
+      (when-not (= to 0) (on-drag-end-chat from to updated-data item))
+      (on-drag-end-category to updated-data item))))
 
 (defn draggable-list []
   [rn/draggable-flat-list
@@ -148,14 +159,13 @@
   (let [{:keys [community-id]} (<sub [:get-screen-params])
         {:keys [id name images members permissions color]}
         (<sub [:communities/community community-id])
-        sorted-categories (<sub [:communities/sorted-categories community-id])
-        categories        (conj sorted-categories
-                                {:id           ""
-                                 :position     (count sorted-categories)
-                                 :name         (i18n/label :t/none)
-                                 :community-id community-id})
-        chats             (<sub [:chats/sorted-categories-by-community-id community-id])]
-    (reset-data categories chats)
+        sorted-categories (<sub [:communities/sorted-categories community-id])]
+    (reset! categories (conj sorted-categories {:id           ""
+                                                :position     (count sorted-categories)
+                                                :name         (i18n/label :t/none)
+                                                :community-id community-id}))
+    (reset! chats (<sub [:chats/sorted-categories-by-community-id community-id]))
+    (reset-data)
     [:<>
      [topbar/topbar
       {:modal?  true
@@ -164,12 +174,4 @@
                  (count members)]}]
      (if (and (empty? sorted-categories) (empty? chats))
        [community/blank-page (i18n/label :t/welcome-community-blank-message-edit-chats)]
-       [:<>
-        [quo/list-item {:size            :small
-                        :title           (i18n/label :t/collapse-chats)
-                        :active          @collapse-chats?
-                        :accessory       :switch
-                        :container-style {:padding-left 10}
-                        :on-press        #(reset! collapse-chats? (not @collapse-chats?))}]
-        [quo/separator]
-        [draggable-list]])]))
+       [draggable-list])]))
