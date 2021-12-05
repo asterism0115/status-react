@@ -1438,7 +1438,7 @@
  :<- [:chats/mentionable-contacts]
  :<- [:contacts/blocked-set]
  :<- [:multiaccount]
- (fn [[{:keys [chat-id users contacts community-id chat-type]} mentionable-contacts blocked {:keys [name preferred-name public-key]}]]
+ (fn [[{:keys [chat-id users contacts community-id chat-type] :as chat} mentionable-contacts blocked {:keys [name preferred-name public-key]}]]
    (let [community-members @(re-frame/subscribe [:communities/community-members
                                                  community-id])
          contacts-with-one-to-one (if (= chat-type constants/one-to-one-chat-type)
@@ -1446,6 +1446,7 @@
                                                                                                               contact.db/public-key->new-contact
                                                                                                               contact.db/enrich-contact)))
                                     mentionable-contacts)
+         members-left (into #{} (filter #(group-chat/member-removed? chat %) (keys users)))
          filtered-contacts (select-keys contacts-with-one-to-one (if (nil? community-id)
                                                                    (distinct (concat (seq contacts) (keys users) [chat-id]))
                                                                    (keys community-members)))]
@@ -1456,7 +1457,7 @@
                                    {:alias      name
                                     :name       (or preferred-name name)
                                     :public-key public-key})))
-            (conj blocked public-key)))))
+            (conj (concat blocked members-left) public-key)))))
 
 (re-frame/reg-sub
  :chat/mention-suggestions
